@@ -15,13 +15,29 @@ def  getPatternList(*args, **kwargs):
     return db.execute(query, tuple()).fetchall()
 
 
+def complish(path):
+    '''Check file still downloading by aria2 or not.
+
+    return True if file finish download.'''
+    ariaext = ['aria2', 'aria2__temp']
+    ariaf = ['.'.join([path, ext]) for ext in ariaext]
+
+    for ariaf in ariaf:
+        if os.path.exists(ariaf) or ariaext[0] in path:
+            return False
+    else:
+        return True
+
+
 def match(root, patterns):
     sortlist = []
-    for pat in patterns:
-        for fname in os.listdir(root):
-            src = os.path.join(root, fname)
-            dst = os.path.join(pat['dst'], fname)
+    for fname in os.listdir(root):
+        src = os.path.join(root, fname)
+        if not complish(src):
+            continue
+        for pat in patterns:
             if pat['pattern'] in fname:
+                dst = os.path.join(pat['dst'], fname)
                 sortlist.append({'dst': dst, 'src': src})
     return sortlist
 
