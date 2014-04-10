@@ -38,3 +38,7 @@ CREATE TABLE anime_types(
     type text,
     unique(anime_id, type)
 );
+create view anime_dirs as
+    select id as anime_id, strftime("%Y-%m", startdate) || ' ' || name as dir_name
+    from anime
+    order by id;
