@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sqlite3
 import os.path
+import shutil
 
 from dbms import DBMS
 
@@ -49,6 +50,7 @@ if __name__ == '__main__':
         directorys by patterns ''')
     parser.add_argument('--src', help='source directory')
     parser.add_argument('--dst', help='destination directory')
+    parser.add_argument('-d', '--dry-run', help='dry run', action='store_true')
     args = parser.parse_args()
     
     db = sqlite3.connect('../data/acgndb.sqlite', factory=DBMS)
@@ -60,3 +62,13 @@ if __name__ == '__main__':
         pat.append({'pattern': pattern['pattern'], 'dst': dst})
 
     sortlist = match(args.src, pat)
+
+    for path in sortlist:
+        if args.dry_run:
+            print('{} -> {}'.format(path['src'], path['dst']))
+        else:
+            try:
+                shutil.move(path['src'], path['dst'])
+            except FileExistsError as e:
+                print(e)
+
