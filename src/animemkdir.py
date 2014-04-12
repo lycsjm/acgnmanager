@@ -49,10 +49,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='automatically make formatted dirs to given root')
     parser.add_argument('--dst', help='path to create dirs')
+    parser.add_argument('--date', nargs=2, help='date option of mhaf')
     args = parser.parse_args()
 
     limits = {}
-    limits['date'] = getSeason(datetime.date.today())
+    if args.date is None:
+        limits['date'] = getSeason()
+    else:
+        limits['date'] = []
+        for date in args.date:
+            ts = datetime.datetime.strptime(date, '%Y-%m-%d').timestamp()
+            limits['date'].append(datetime.date.fromtimestamp(ts))
 
     db = sqlite3.connect('../data/acgndb.sqlite', factory=DBMS)
     dirlist = getDirList(db, args.dst, db.getaids(limits))
