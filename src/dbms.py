@@ -29,7 +29,7 @@ class DBMS(sqlite3.Connection):
             aidslist.append(toset(res))
         if 'name' in limits:
             res = self.execute('''
-                select id from anime where name = ?
+                select id from anime where name = ?;
             ''', (limits['name'], ))
             aidslist.append(toset(res))
         
