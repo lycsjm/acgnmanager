@@ -32,17 +32,20 @@ if __name__ == '__main__':
                         it scan all file in that directory''')
     parser.add_argument('--dst', help='''default store directory of that
                         bittorrent file.''')
+    parser.add_argument('--secret', help='''given rpc secret token''')
     args = parser.parse_args()
 
     aria2 = xmlrpc.client.ServerProxy(args.aria2uri).aria2
-
+    tok = 'token:'
+    if args.secret is not None:
+        tok += args.secret
     flist = getFileList(args.path)
 
     # add bittorrent to aria2
     for f in flist:
         bt = xmlrpc.client.Binary(open(f, 'rb').read())
-        gid = aria2.addTorrent(bt, [])
-    aria2.saveSession()
+        gid = aria2.addTorrent(tok, bt, [])
+    aria2.saveSession(tok)
     # read info of added file
     # process file(change dir, drop download ... etc)
     # ask if pattern not found
