@@ -40,11 +40,14 @@ if __name__ == '__main__':
     if args.secret is not None:
         tok += args.secret
     flist = getFileList(args.path)
+    opts = {}
+    if args.dst is not None:
+        opts['dir'] = os.path.abspath(args.dst)
 
     # add bittorrent to aria2
     for f in flist:
         bt = xmlrpc.client.Binary(open(f, 'rb').read())
-        gid = aria2.addTorrent(tok, bt, [])
+        gid = aria2.addTorrent(tok, bt, [], opts)
     aria2.saveSession(tok)
     # read info of added file
     # process file(change dir, drop download ... etc)
