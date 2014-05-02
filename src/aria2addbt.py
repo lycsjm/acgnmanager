@@ -8,7 +8,7 @@ from dbms import DBMS
 from config import Config
 
 
-def getArgs():
+def makeParser():
     import argparse
     parser = argparse.ArgumentParser(
         description='''Add bitfile to aria2 and automatical change dir.
@@ -22,17 +22,24 @@ def getArgs():
                         bittorrent file.''')
     parser.add_argument('--secret', help='''given rpc secret token''')
     parser.add_argument('--pat-root', help='''specified root of pattern''')
-    parser.add_argument('-c', '--config', nargs=2, metavar=('FILE', 'SECTION'),
+    parser.add_argument('-c', '--config', nargs='+', metavar=('FILE', 'SECTION'),
                         help='''Read config from file. FILE is file name of
                         that config and SECTION is section.''')
-    args = parser.parse_args()
+    return parser
 
+
+def getArgs(args):
     if args.config is not None:
-        conf = Config(args.config[0], args.config[1])
-        for key in vars(args):
-            if key in conf:
-                exec('args.{key} = conf["{key}"]'.format(key=key))
-    return args
+        if len(args.config) == 1:
+            args.config.append('default')
+        for section in args.config[1:]:
+            conf = Config(args.config[0], section)
+            for key in vars(args):
+                if key in conf:
+                    exec('args.{key} = conf["{key}"]'.format(key=key))
+            yield args
+    else:
+        yield args
     
 
 def getFileList(path):
@@ -84,36 +91,37 @@ def autoChangeDir(aria2, pats, dstroot):
     
 
 if __name__ == '__main__':
-    args = getArgs()
+    parser = makeParser()
 
-    aria2 = xmlrpc.client.ServerProxy(args.aria2uri).aria2
-    tok = 'token:'
-    if args.secret is not None:
-        tok += args.secret
-    flist = getFileList(args.path)
-    opts = {}
-    if args.dst is not None:
-        opts['dir'] = os.path.abspath(args.dst)
+    for args in getArgs(parser.parse_args()):
+        aria2 = xmlrpc.client.ServerProxy(args.aria2uri).aria2
+        tok = 'token:'
+        if args.secret is not None:
+            tok += args.secret
+        flist = getFileList(args.path)
+        opts = {}
+        if args.dst is not None:
+            opts['dir'] = os.path.abspath(args.dst)
 
-    opts = {}
-    if args.dst is not None:
-        if not os.path.isdir(args.dst):
-            raise ValueError('dst must be a directory.')
-        opts['dir'] = os.path.abspath(args.dst)
-        if args.pat_root is None:
-            dstroot = opts['dir']
-        elif not os.path.isdir(args.pat_root):
-            raise ValueError('pat-root must be a direcory')
-        else:
-            dstroot = os.path.abspath(args.pat_root)
+        opts = {}
+        if args.dst is not None:
+            if not os.path.isdir(args.dst):
+                raise ValueError('dst must be a directory.')
+            opts['dir'] = os.path.abspath(args.dst)
+            if args.pat_root is None:
+                dstroot = opts['dir']
+            elif not os.path.isdir(args.pat_root):
+                raise ValueError('pat-root must be a direcory')
+            else:
+                dstroot = os.path.abspath(args.pat_root)
 
-    # add bittorrent to aria2
-    for f in flist:
-        bt = xmlrpc.client.Binary(open(f, 'rb').read())
-        gid = aria2.addTorrent(tok, bt, [], opts)
+        # add bittorrent to aria2
+        for f in flist:
+            bt = xmlrpc.client.Binary(open(f, 'rb').read())
+            gid = aria2.addTorrent(tok, bt, [], opts)
 
-        # process file(change dir, drop download ... etc)
-        pats = getPatterns()
-        autoChangeDir(aria2, pats, dstroot)
-    aria2.saveSession(tok)
-    # ask if pattern not found
+            # process file(change dir, drop download ... etc)
+            pats = getPatterns()
+            autoChangeDir(aria2, pats, dstroot)
+        aria2.saveSession(tok)
+        # ask if pattern not found
