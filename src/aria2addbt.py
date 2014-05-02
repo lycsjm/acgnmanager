@@ -5,7 +5,35 @@ import os.path
 import sqlite3
 
 from dbms import DBMS
+from config import Config
 
+
+def getArgs():
+    import argparse
+    parser = argparse.ArgumentParser(
+        description='''Add bitfile to aria2 and automatical change dir.
+        ''')
+    parser.add_argument('--aria2uri', help='aria2 uri')
+    parser.add_argument('--path',
+                        help='''Path of bittorrent file, may be a bittorrent
+                        file or directory. If path is directory, it scan all
+                        file in that directory''')
+    parser.add_argument('--dst', help='''default store directory of that
+                        bittorrent file.''')
+    parser.add_argument('--secret', help='''given rpc secret token''')
+    parser.add_argument('--pat-root', help='''specified root of pattern''')
+    parser.add_argument('-c', '--config', nargs=2, metavar=('FILE', 'SECTION'),
+                        help='''Read config from file. FILE is file name of
+                        that config and SECTION is section.''')
+    args = parser.parse_args()
+
+    if args.config is not None:
+        conf = Config(args.config[0], args.config[1])
+        for key in vars(args):
+            if key in conf:
+                exec('args.{key} = conf["{key}"]'.format(key=key))
+    return args
+    
 
 def getFileList(path):
     '''get list of bittorrent files.'''
@@ -56,19 +84,7 @@ def autoChangeDir(aria2, pats, dstroot):
     
 
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(
-        description='''Add bitfile to aria2 and automatical change dir.
-        ''')
-    parser.add_argument('aria2uri', help='aria2 uri')
-    parser.add_argument('path', help='''Path of bittorrent file, may be a
-                        bittorrent file or directory. If path is directory,
-                        it scan all file in that directory''')
-    parser.add_argument('--dst', help='''default store directory of that
-                        bittorrent file.''')
-    parser.add_argument('--secret', help='''given rpc secret token''')
-    parser.add_argument('--pat-root', help='''specified root of pattern''')
-    args = parser.parse_args()
+    args = getArgs()
 
     aria2 = xmlrpc.client.ServerProxy(args.aria2uri).aria2
     tok = 'token:'
