@@ -1,6 +1,11 @@
 import json
 
 class Config(dict):
+    def __init__(self, path=None, section='default', *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if path is not None:
+            self.read(path, section)
+
     def read(self, path, section='default'):
         '''read config from config file.
         
@@ -16,7 +21,7 @@ class Config(dict):
         if self.section not in self.conf:
             raise KeyError('{} not a valid key'.format(self.section))
 
-        self.hasDefault = 'default' in self.conf['default']
+        self.hasDefault = 'default' in self.conf
 
         if self.hasDefault:
             self.update(self.conf['default'])
