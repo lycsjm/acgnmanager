@@ -97,9 +97,8 @@ def autoChangeDir(aria2, pats, dstroot):
         # not find any pattern
         # ask for add pattern
         pass
-    
 
-if __name__ == '__main__':
+def main():
     parser = makeParser()
 
     for args in getArgs(parser.parse_args()):
@@ -134,3 +133,8 @@ if __name__ == '__main__':
             autoChangeDir(aria2, pats, dstroot)
         aria2.saveSession(tok)
         # ask if pattern not found
+    
+    
+
+if __name__ == '__main__':
+    main()

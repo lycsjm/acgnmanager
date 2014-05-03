@@ -43,7 +43,7 @@ def match(root, patterns):
     return sortlist
 
 
-if __name__ == '__main__':
+def main():
     import argparse
     parser = argparse.ArgumentParser(
         description='''Sorting files in source directory to destination
@@ -72,3 +72,6 @@ if __name__ == '__main__':
             except FileExistsError as e:
                 print(e)
 
+
+if __name__ == '__main__':
+    main()

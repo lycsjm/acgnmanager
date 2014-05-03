@@ -44,7 +44,7 @@ def getDirList(db, root, ids):
     return dirlist
 
 
-if __name__ == '__main__':
+def main():
     import argparse
     parser = argparse.ArgumentParser(
         description='automatically make formatted dirs to given root')
@@ -69,3 +69,7 @@ if __name__ == '__main__':
             os.mkdir(name)
         except FileExistsError as e:
             print(e)
+
+
+if __name__ == '__main__':
+    main()
