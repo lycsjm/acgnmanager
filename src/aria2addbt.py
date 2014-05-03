@@ -3,6 +3,7 @@ import xmlrpc.client
 import os
 import os.path
 import sqlite3
+import textwrap
 
 from dbms import DBMS
 from config import Config
@@ -11,8 +12,15 @@ from config import Config
 def makeParser():
     import argparse
     parser = argparse.ArgumentParser(
-        description='''Add bitfile to aria2 and automatical change dir.
-        ''')
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='''Add bitfile to aria2 and automatical change dir.''',
+        epilog=textwrap.dedent('''
+        Example:
+            aria2addbt.py --aria2uri "http://localhost:6800/rpc" --path\\
+            ~/bittorrent --dst ~/anime
+
+            aria2addbt.py --config config.json anime music
+        '''))
     parser.add_argument('--aria2uri', help='aria2 uri')
     parser.add_argument('--path',
                         help='''Path of bittorrent file, may be a bittorrent
@@ -67,6 +75,7 @@ def getPatterns():
         order by id;
     '''
     return db.execute(query, tuple()).fetchall()
+
 
 def autoChangeDir(aria2, pats, dstroot):
     ''' change directory based on patterns'''

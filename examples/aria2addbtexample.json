@@ -1,0 +1,16 @@
+{
+    "default": {
+        "aria2uri": "http://arch-wmmks:6800/rpc",
+        "secret": "ar Qg4"
+    },
+    "anime": {
+        "path": "/media/data/bt/anime",
+        "dst": "/media/data/acgn/tmp",
+        "pat_root": "/media/data/acgn/anime"
+    },
+    "music": {
+        "path": "/media/data/bt/musice",
+        "dst": "/media/data/acgn/tmp",
+        "pat_root": "/media/data/acgn/music"
+    }
+}
