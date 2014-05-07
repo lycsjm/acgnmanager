@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import datetime
 import sqlite3
 import os.path
