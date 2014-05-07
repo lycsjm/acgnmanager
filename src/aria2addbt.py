@@ -77,7 +77,7 @@ def getPatterns():
     return db.execute(query, tuple()).fetchall()
 
 
-def autoChangeDir(aria2, pats, dstroot):
+def autoChangeDir(aria2, tok, gid, pats, dstroot):
     ''' change directory based on patterns'''
     # read info of added file
     info = aria2.tellStatus(tok, gid, ['bittorrent', 'dir'])
@@ -130,7 +130,7 @@ def main():
 
             # process file(change dir, drop download ... etc)
             pats = getPatterns()
-            autoChangeDir(aria2, pats, dstroot)
+            autoChangeDir(aria2, tok, gid, pats, dstroot)
         aria2.saveSession(tok)
         # ask if pattern not found
 
