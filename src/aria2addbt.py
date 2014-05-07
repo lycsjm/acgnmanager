@@ -4,6 +4,7 @@ import os
 import os.path
 import sqlite3
 import textwrap
+import sys
 
 from dbms import DBMS
 from config import Config
@@ -68,7 +69,9 @@ def getFileList(path):
 
 
 def getPatterns():
-    db = sqlite3.connect('../data/acgndb.sqlite', factory=DBMS)
+    scriptpath = os.path.dirname(sys.argv[0])
+    dbpath = os.path.join(scriptpath, '../data/acgndb.sqlite')
+    db = sqlite3.connect(dbpath, factory=DBMS)
     query = '''
         select anime_id as id, pattern, dir_name
         from anime_file_patterns join anime_dirs using (anime_id)
