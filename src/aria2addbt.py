@@ -133,8 +133,7 @@ def main():
             autoChangeDir(aria2, pats, dstroot)
         aria2.saveSession(tok)
         # ask if pattern not found
-    
-    
+
 
 if __name__ == '__main__':
     main()
