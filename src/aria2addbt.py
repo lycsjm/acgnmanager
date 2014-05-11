@@ -80,9 +80,10 @@ def getPatterns():
     return db.execute(query, tuple()).fetchall()
 
 
-def autoChangeDir(aria2, tok, gid, pats, dstroot):
+def autoChangeDir(aria2, tok, gid, opts, pats, dstroot):
     ''' change directory based on patterns'''
     # read info of added file
+    # TODO: change this file
     info = aria2.tellStatus(tok, gid, ['bittorrent', 'dir'])
     try:
         name = info['bittorrent']['info']['name']
@@ -100,6 +101,7 @@ def autoChangeDir(aria2, tok, gid, pats, dstroot):
         # not find any pattern
         # ask for add pattern
         pass
+
 
 def main():
     parser = makeParser()
@@ -133,7 +135,8 @@ def main():
 
             # process file(change dir, drop download ... etc)
             pats = getPatterns()
-            autoChangeDir(aria2, tok, gid, pats, dstroot)
+            autoChangeDir(aria2, tok, gid, opts, pats, dstroot)
+            # log and remove source bt
         aria2.saveSession(tok)
         # ask if pattern not found
 
