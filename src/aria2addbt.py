@@ -5,6 +5,7 @@ import os.path
 import sqlite3
 import textwrap
 import sys
+import datetime
 
 from lib.dbms import DBMS
 from lib.config import Config
@@ -101,6 +102,7 @@ def autoChangeDir(aria2, tok, gid, opts, pats, dstroot):
         # not find any pattern
         # ask for add pattern
         pass
+    return name
 
 
 def main():
@@ -114,10 +116,6 @@ def main():
         flist = getFileList(args.path)
         opts = {}
         if args.dst is not None:
-            opts['dir'] = os.path.abspath(args.dst)
-
-        opts = {}
-        if args.dst is not None:
             if not os.path.isdir(args.dst):
                 raise ValueError('dst must be a directory.')
             opts['dir'] = os.path.abspath(args.dst)
@@ -128,6 +126,14 @@ def main():
             else:
                 dstroot = os.path.abspath(args.pat_root)
 
+        scriptpath = os.path.dirname(sys.argv[0])
+        dbpath = os.path.join(scriptpath, '../data/filelog.sqlite')
+        logger = sqlite3.connect(dbpath)
+        logquery = '''
+            insert or ignore into torrent_log(addDate, fname, tname)
+            values (?, ?, ?);
+        '''
+        today = datetime.date.today()
         # add bittorrent to aria2
         for f in flist:
             bt = xmlrpc.client.Binary(open(f, 'rb').read())
@@ -135,10 +141,14 @@ def main():
 
             # process file(change dir, drop download ... etc)
             pats = getPatterns()
-            autoChangeDir(aria2, tok, gid, opts, pats, dstroot)
+            name = autoChangeDir(aria2, tok, gid, opts, pats, dstroot)
             # log and remove source bt
+            args = (today, name, f)
+            logger.execute(logquery, args)
+            os.remove(f)
         aria2.saveSession(tok)
         # ask if pattern not found
+    logger.commit()
 
 
 if __name__ == '__main__':
