@@ -52,8 +52,6 @@ class Aria2():
 
         fid may be one of 'all', 'active', 'waiting', 'paused', 'stopped'.'''
         knowntypes = ('all', 'active', 'waiting', 'paused', 'stopped')
-        if ftype not in knowntypes:
-            raise KeyError('{} not a valid type'.format(ftype))
         if ftype == 'all':
             ftypes = knowntypes[1:]
         else:
@@ -74,9 +72,12 @@ class Aria2():
                 reslist.extend(self.aria2.tellActive(*args))
             elif fid == 'stopped':
                 reslist.extend(self.aria2.tellStopped(*numargs))
-            else:
+            elif fid == 'paused' or fid == 'waiting':
                 res = self.aria2.tellWaiting(*numargs)
                 reslist.extend([d for d in res if d['status'] == fid])
+            else:
+                args.insert(1, fid)
+                reslist.append(self.aria2.tellStatus(*args))
 
         if not queryBT:
             for d in reslist:
