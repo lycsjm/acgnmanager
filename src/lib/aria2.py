@@ -105,3 +105,16 @@ class Aria2():
             part = cmd.split('(', 1)
             cmd = ''.join((part[0], '(', repr(self.tok), ', ', part[1]))
         return eval('self.aria2.' + cmd)
+
+    def execute(self, fname, *args, **kwargs):
+        return eval('self.aria2.' + fname)(self.tok, *args, **kwargs)
+    
+
+def main():
+    aria2 = Aria2('http://arch-wmmks:6800/rpc')
+    from pprint import pprint
+    pprint(aria2.execute('tellWaiting', 0, 1))
+
+
+if __name__ == '__main__':
+    main()
