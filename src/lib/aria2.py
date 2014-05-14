@@ -13,6 +13,7 @@ class Aria2():
             self.tok += self.conf['rpc-secret']
 
     def _loadconfig(self):
+        '''load user's config.'''
         fname = os.path.expanduser('~/.aria2/aria2.conf')
         conf = {}
 
