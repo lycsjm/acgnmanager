@@ -9,12 +9,20 @@ class Aria2():
         self.tok = 'token:'
         if secret is not None:
             self.tok += secret
+        elif 'rpc-secret' in self.conf:
+            self.tok += self.conf['rpc-secret']
 
     def _loadconfig(self):
         fname = os.path.expanduser('~/.aria2/aria2.conf')
         conf = {}
 
-        for line in open(fname):
+        try:
+            with open(fname) as f:
+                lines = f.readlines()
+        except FileNotFoundError:
+            return conf
+
+        for line in lines:
             line = line.strip()
             if not line or line.startswith('#'):
                 continue
