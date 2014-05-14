@@ -86,3 +86,12 @@ class Aria2():
                     continue
 
         return reslist
+
+    def eval(self, cmd, addSecret=True):
+        ''' pass command to xml-rpc.
+        
+        if addSecret is true, cmd will add rpc secret at first argument'''
+        if addSecret:
+            part = cmd.split('(', 1)
+            cmd = ''.join((part[0], '(', repr(self.tok), ', ', part[1]))
+        return eval('self.aria2.' + cmd)
