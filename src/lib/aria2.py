@@ -97,6 +97,22 @@ class Aria2():
 
         return reslist
 
+    def getOption(self, gid):
+        '''Get option of specified download'''
+        return self.aria2.getOption(self.tok, gid)
+    
+    def changeOption(self, gid, opts):
+        noPauseOpts = ('bt-max-peers', 'force-save', 'max-download-limit',
+                       'max-upload-limit', 'bt-remove-unselected-file',
+                       'bt-request-peer-speed-limit',)
+
+        if all(key in noPauseOpts for key in opts):
+            self.aria2.changeOption(self.tok, gid, opts)
+        else:
+            self.aria2.pause(self.tok, gid)
+            self.aria2.changeOption(self.tok, gid, opts)
+            self.aria2.unpause(self.tok, gid)
+
     def eval(self, cmd, addSecret=True):
         ''' pass command to xml-rpc.
         
@@ -108,13 +124,3 @@ class Aria2():
 
     def execute(self, fname, *args, **kwargs):
         return eval('self.aria2.' + fname)(self.tok, *args, **kwargs)
-    
-
-def main():
-    aria2 = Aria2('http://arch-wmmks:6800/rpc')
-    from pprint import pprint
-    pprint(aria2.execute('tellWaiting', 0, 1))
-
-
-if __name__ == '__main__':
-    main()
