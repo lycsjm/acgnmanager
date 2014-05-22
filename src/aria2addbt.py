@@ -65,7 +65,8 @@ def getFileList(path):
             if isbt(f):
                 flist.append(f)
     else:
-        raise ValueError('Not a valid bittorrent file or path.')
+        msg = '{} not a directory or valide bittorrent file.'.format(path)
+        raise ValueError(msg)
     return flist
 
 
