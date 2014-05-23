@@ -145,6 +145,12 @@ class Aria2():
             args.append(keys)
         numargs = args[:1] + [offset, num] + args[1:]
 
+        def delKey(info, key):
+            try:
+                del info[key]
+            except KeyError:
+                pass
+
         reslist = []
         for fid in ftypes:
             if fid == 'active':
@@ -166,7 +172,12 @@ class Aria2():
                 reslist.extend([d for d in res if d['status'] == fid][:num])
             else:
                 args.insert(1, fid)
-                reslist.append(self.aria2.tellStatus(*args))
+                res = self.aria2.tellStatus(*args)
+                if not queryBT:
+                    delKey(res, 'bittorrent')
+                if not queryStat:
+                    delKey(res, 'status')
+                return res
 
         if not queryBT:
             for d in reslist:
