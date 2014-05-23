@@ -74,6 +74,13 @@ class Aria2():
         else:
             return self.aria2.remove(self.tok, gid)
 
+    def clear(self, ftype):
+        '''Remove stopped result'''
+        if ftype == 'all':
+            return self.aria2.purgeDownloadResult(self.tok)
+        else:
+            return self.removeDownoadResult(self.tok, ftype)
+
     def list(self, ftype, keys=None, offset=0, num=5):
         '''return status of given fid
 
