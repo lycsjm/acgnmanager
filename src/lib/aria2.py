@@ -86,10 +86,11 @@ class Aria2():
 
         fid may be one of 'all', 'active', 'waiting', 'paused', 'stopped',
         'error', 'removed', or 'completed'.'''
-        knowntypes = ('all', 'active', 'waiting', 'paused', 'stopped')
+        alltypes = ('active', 'queueing', 'stopped')
+        queueingtypes = ('waiting', 'paused')
         stoppedtypes = ('error', 'removed', 'completed')
         if ftype == 'all':
-            ftypes = knowntypes[1:]
+            ftypes = alltypes
         else:
             ftypes = [ftype]
 
@@ -112,7 +113,9 @@ class Aria2():
                 reslist.extend(self.aria2.tellActive(*args))
             elif fid == 'stopped':
                 reslist.extend(self.aria2.tellStopped(*numargs))
-            elif fid == 'paused' or fid == 'waiting':
+            elif fid == 'queueing':
+                reslist.extend(self.aria2.tellWaiting(*numargs))
+            elif fid in queueingtypes:
                 res = self.aria2.tellWaiting(*numargs)
                 reslist.extend([d for d in res if d['status'] == fid])
             elif fid in stoppedtypes:
