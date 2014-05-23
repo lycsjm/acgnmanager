@@ -119,7 +119,8 @@ class Aria2():
         reslist = []
         for fid in ftypes:
             if fid == 'active':
-                reslist.extend(self.aria2.tellActive(*args))
+                res = self.aria2.tellActive(*args)[offset:offset + num]
+                reslist.extend(res)
             elif fid == 'stopped':
                 numargs[2] = num
                 reslist.extend(self.aria2.tellStopped(*numargs))
