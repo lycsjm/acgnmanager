@@ -68,6 +68,12 @@ class Aria2():
             else:
                 return self.aria2.pause(self.tok, ftype)
 
+    def remove(self, gid, force=False):
+        if force:
+            return self.aria2.forceRemove(self.tok, gid)
+        else:
+            return self.aria2.remove(self.tok, gid)
+
     def list(self, ftype, keys=None, offset=0, num=5):
         '''return status of given fid
 
