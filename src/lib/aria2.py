@@ -56,6 +56,18 @@ class Aria2():
         else:
             return self.aria2.addUri(*args)
 
+    def pause(self, ftype, force=False):
+        if ftype == 'all':
+            if force:
+                return self.aria2.forcePauseAll(self.tok)
+            else:
+                return self.aria2.pauseAll(self.tok)
+        else:
+            if force:
+                return self.aria2.forcePause(self.tok, ftype)
+            else:
+                return self.aria2.pause(self.tok, ftype)
+
     def list(self, ftype, keys=None, offset=0, num=5):
         '''return status of given fid
 
