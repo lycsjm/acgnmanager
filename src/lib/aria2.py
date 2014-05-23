@@ -3,6 +3,23 @@ import os.path
 
 
 class Aria2():
+    '''
+    TODO: not implement function:
+    * getUris(tok, gid)
+    * getFiles(tok, gid)
+    * getPeers(tok, gid)
+    * getServers(tok, gid)
+    * changePosition(tok, gid, pos, how)
+    * changeUri(tok, gid, findex, delUris, addUris, pos)
+    * getGlobalOption(tok)
+    * changeGlobaloption(tok, opt)
+    * getGlobalStat(tok)
+    * getVersion(tok)
+    * getSessionInfo(tok)
+    * shutdown(tok)
+    * forceShutdown(tok)
+    * system.multicall(method)
+    '''
     def __init__(self, uri, secret=None):
         self.conf = self._loadconfig()
         self.aria2 = xmlrpc.client.ServerProxy(uri).aria2
@@ -13,6 +30,7 @@ class Aria2():
             self.tok += self.conf['rpc-secret']
 
     def _loadconfig(self):
+        '''load user's config.'''
         fname = os.path.expanduser('~/.aria2/aria2.conf')
         conf = {}
 
@@ -55,46 +73,141 @@ class Aria2():
         else:
             return self.aria2.addUri(*args)
 
-    def list(self, ftype, keys=None, offset=0, num=5):
+    def pause(self, ftype, force=False):
+        if ftype == 'all':
+            if force:
+                return self.aria2.forcePauseAll(self.tok)
+            else:
+                return self.aria2.pauseAll(self.tok)
+        else:
+            if force:
+                return self.aria2.forcePause(self.tok, ftype)
+            else:
+                return self.aria2.pause(self.tok, ftype)
+
+    def unpause(self, ftype):
+        if ftype == 'all':
+            return self.aria2.unpauseAll(self.tok)
+        else:
+            return self.aria2.unpause()
+
+    def remove(self, gid, force=False):
+        if force:
+            return self.aria2.forceRemove(self.tok, gid)
+        else:
+            return self.aria2.remove(self.tok, gid)
+
+    def clear(self, ftype):
+        '''Remove stopped result'''
+        if ftype == 'all':
+            return self.aria2.purgeDownloadResult(self.tok)
+        else:
+            return self.removeDownoadResult(self.tok, ftype)
+
+    def list(self, ftype, keys=None, offset=0, num=-1):
         '''return status of given fid
 
-        fid may be one of 'all', 'active', 'waiting', 'paused', 'stopped'.'''
-        knowntypes = ('all', 'active', 'waiting', 'paused', 'stopped')
+        fid may be gid, or one of 'all', 'active' 'queueing', 'waiting',
+        'paused', 'stopped', 'error', 'removed', and 'completed'.
+        
+        Key 'all' will return all status of file get by tellActive(),
+        tellWaiting(), tellStopped().
+        'queueing' accept all files staus get by tellWaiting(), note that
+        Key 'waiting' only get files that status is 'waititng'.
+        Key 'stopped' accept all files status get by tellStopped().
+        Others key will only return file that status equals to key.
+        If fid is gid, use tellStatus() instead. 
+        
+        return status if between [offest:offest + num], default num is -1,
+        means getting all status to the end'''
+        alltypes = ('active', 'queueing', 'stopped')
+        queueingtypes = ('waiting', 'paused')
+        stoppedtypes = ('error', 'removed', 'completed')
         if ftype == 'all':
-            ftypes = knowntypes[1:]
+            ftypes = alltypes
         else:
             ftypes = [ftype]
 
+        maxnum = 65536
+        if num < 0:
+            num = maxnum
+
         queryBT = True
+        queryStat = True
         args = [self.tok]
         if keys is not None:
             if 'bittorrent' not in keys:
                 queryBT = False
                 keys.append('bittorrent')
+            if 'status' not in keys:
+                queryStat = False
+                keys.append('status')
             args.append(keys)
         numargs = args[:1] + [offset, num] + args[1:]
+
+        def delKey(info, key):
+            try:
+                del info[key]
+            except KeyError:
+                pass
 
         reslist = []
         for fid in ftypes:
             if fid == 'active':
-                reslist.extend(self.aria2.tellActive(*args))
+                res = self.aria2.tellActive(*args)[offset:offset + num]
+                reslist.extend(res)
             elif fid == 'stopped':
+                numargs[2] = num
                 reslist.extend(self.aria2.tellStopped(*numargs))
-            elif fid == 'paused' or fid == 'waiting':
+            elif fid == 'queueing':
+                numargs[2] = num
+                reslist.extend(self.aria2.tellWaiting(*numargs))
+            elif fid in queueingtypes:
+                numargs[2] = maxnum
                 res = self.aria2.tellWaiting(*numargs)
-                reslist.extend([d for d in res if d['status'] == fid])
+                reslist.extend([d for d in res if d['status'] == fid][:num])
+            elif fid in stoppedtypes:
+                numargs[2] = maxnum
+                res = self.aria2.tellStopped(*numargs)
+                reslist.extend([d for d in res if d['status'] == fid][:num])
             else:
                 args.insert(1, fid)
-                reslist.append(self.aria2.tellStatus(*args))
+                res = self.aria2.tellStatus(*args)
+                if not queryBT:
+                    delKey(res, 'bittorrent')
+                if not queryStat:
+                    delKey(res, 'status')
+                return res
 
         if not queryBT:
-            for d in reslist:
-                try:
-                    del d['bittorrent']
-                except KeyError:
-                    continue
+            for res in reslist:
+                delKey(res, 'bittorrent')
+        if not queryStat:
+            for res in reslist:
+                delKey(res, 'status')
+
 
         return reslist
+
+    def getOption(self, gid):
+        '''Get option of specified download'''
+        return self.aria2.getOption(self.tok, gid)
+    
+    def changeOption(self, gid, opts):
+        noPauseOpts = ('bt-max-peers', 'force-save', 'max-download-limit',
+                       'max-upload-limit', 'bt-remove-unselected-file',
+                       'bt-request-peer-speed-limit',)
+
+        if all(key in noPauseOpts for key in opts):
+            self.aria2.changeOption(self.tok, gid, opts)
+        else:
+            self.aria2.pause(self.tok, gid)
+            self.aria2.changeOption(self.tok, gid, opts)
+            self.aria2.unpause(self.tok, gid)
+
+    def save(self):
+        '''save setting'''
+        return self.aria2.saveSession(self.tok)
 
     def eval(self, cmd, addSecret=True):
         ''' pass command to xml-rpc.
@@ -104,3 +217,6 @@ class Aria2():
             part = cmd.split('(', 1)
             cmd = ''.join((part[0], '(', repr(self.tok), ', ', part[1]))
         return eval('self.aria2.' + cmd)
+
+    def execute(self, fname, *args, **kwargs):
+        return eval('self.aria2.' + fname)(self.tok, *args, **kwargs)
