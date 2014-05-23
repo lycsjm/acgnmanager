@@ -84,8 +84,10 @@ class Aria2():
     def list(self, ftype, keys=None, offset=0, num=5):
         '''return status of given fid
 
-        fid may be one of 'all', 'active', 'waiting', 'paused', 'stopped'.'''
+        fid may be one of 'all', 'active', 'waiting', 'paused', 'stopped',
+        'error', 'removed', or 'completed'.'''
         knowntypes = ('all', 'active', 'waiting', 'paused', 'stopped')
+        stoppedtypes = ('error', 'removed', 'completed')
         if ftype == 'all':
             ftypes = knowntypes[1:]
         else:
@@ -112,6 +114,9 @@ class Aria2():
                 reslist.extend(self.aria2.tellStopped(*numargs))
             elif fid == 'paused' or fid == 'waiting':
                 res = self.aria2.tellWaiting(*numargs)
+                reslist.extend([d for d in res if d['status'] == fid])
+            elif fid in stoppedtypes:
+                res = self.aria2.tellStopped(*numargs)
                 reslist.extend([d for d in res if d['status'] == fid])
             else:
                 args.insert(1, fid)
