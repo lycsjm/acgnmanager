@@ -180,14 +180,11 @@ class Aria2():
                 return res
 
         if not queryBT:
-            for d in reslist:
-                try:
-                    del d['bittorrent']
-                except KeyError:
-                    continue
+            for res in reslist:
+                delKey(res, 'bittorrent')
         if not queryStat:
-            for d in reslist:
-                del d['status']
+            for res in reslist:
+                delKey(res, 'status')
 
 
         return reslist
