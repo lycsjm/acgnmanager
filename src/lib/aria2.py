@@ -81,7 +81,7 @@ class Aria2():
         else:
             return self.removeDownoadResult(self.tok, ftype)
 
-    def list(self, ftype, keys=None, offset=0, num=5):
+    def list(self, ftype, keys=None, offset=0, num=-1):
         '''return status of given fid
 
         fid may be gid, or one of 'all', 'active' 'queueing', 'waiting',
@@ -93,7 +93,10 @@ class Aria2():
         Key 'waiting' only get files that status is 'waititng'.
         Key 'stopped' accept all files status get by tellStopped().
         Others key will only return file that status equals to key.
-        If fid is gid, use tellStatus() instead. '''
+        If fid is gid, use tellStatus() instead. 
+        
+        return status if between [offest:offest + num], default num is -1,
+        means getting all status to the end'''
         alltypes = ('active', 'queueing', 'stopped')
         queueingtypes = ('waiting', 'paused')
         stoppedtypes = ('error', 'removed', 'completed')
@@ -102,9 +105,12 @@ class Aria2():
         else:
             ftypes = [ftype]
 
+        maxnum = 65536
+        if num < 0:
+            num = maxnum
+
         queryBT = True
         queryStat = True
-        maxnum = 1000
         args = [self.tok]
         if keys is not None:
             if 'bittorrent' not in keys:
