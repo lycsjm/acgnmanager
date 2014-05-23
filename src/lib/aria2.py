@@ -3,6 +3,23 @@ import os.path
 
 
 class Aria2():
+    '''
+    TODO: not implement function:
+    * getUris(tok, gid)
+    * getFiles(tok, gid)
+    * getPeers(tok, gid)
+    * getServers(tok, gid)
+    * changePosition(tok, gid, pos, how)
+    * changeUri(tok, gid, findex, delUris, addUris, pos)
+    * getGlobalOption(tok)
+    * changeGlobaloption(tok, opt)
+    * getGlobalStat(tok)
+    * getVersion(tok)
+    * getSessionInfo(tok)
+    * shutdown(tok)
+    * forceShutdown(tok)
+    * system.multicall(method)
+    '''
     def __init__(self, uri, secret=None):
         self.conf = self._loadconfig()
         self.aria2 = xmlrpc.client.ServerProxy(uri).aria2
@@ -72,7 +89,7 @@ class Aria2():
         if ftype == 'all':
             return self.aria2.unpauseAll(self.tok)
         else:
-            return self.aria2.unpause(self.tok, ftype)
+            return self.aria2.unpause()
 
     def remove(self, gid, force=False):
         if force:
