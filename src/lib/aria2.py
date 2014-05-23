@@ -138,6 +138,10 @@ class Aria2():
             self.aria2.changeOption(self.tok, gid, opts)
             self.aria2.unpause(self.tok, gid)
 
+    def save(self):
+        '''save setting'''
+        return self.aria2.saveSession(self.tok)
+
     def eval(self, cmd, addSecret=True):
         ''' pass command to xml-rpc.
         
