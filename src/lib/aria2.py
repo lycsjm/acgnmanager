@@ -93,8 +93,7 @@ class Aria2():
         Key 'waiting' only get files that status is 'waititng'.
         Key 'stopped' accept all files status get by tellStopped().
         Others key will only return file that status equals to key.
-        If fid is gid, use tellStatus instead.
-        '''
+        If fid is gid, use tellStatus() instead. '''
         alltypes = ('active', 'queueing', 'stopped')
         queueingtypes = ('waiting', 'paused')
         stoppedtypes = ('error', 'removed', 'completed')
@@ -105,6 +104,7 @@ class Aria2():
 
         queryBT = True
         queryStat = True
+        maxnum = 1000
         args = [self.tok]
         if keys is not None:
             if 'bittorrent' not in keys:
@@ -121,15 +121,19 @@ class Aria2():
             if fid == 'active':
                 reslist.extend(self.aria2.tellActive(*args))
             elif fid == 'stopped':
+                numargs[2] = num
                 reslist.extend(self.aria2.tellStopped(*numargs))
             elif fid == 'queueing':
+                numargs[2] = num
                 reslist.extend(self.aria2.tellWaiting(*numargs))
             elif fid in queueingtypes:
+                numargs[2] = maxnum
                 res = self.aria2.tellWaiting(*numargs)
-                reslist.extend([d for d in res if d['status'] == fid])
+                reslist.extend([d for d in res if d['status'] == fid][:num])
             elif fid in stoppedtypes:
+                numargs[2] = maxnum
                 res = self.aria2.tellStopped(*numargs)
-                reslist.extend([d for d in res if d['status'] == fid])
+                reslist.extend([d for d in res if d['status'] == fid][:num])
             else:
                 args.insert(1, fid)
                 reslist.append(self.aria2.tellStatus(*args))
