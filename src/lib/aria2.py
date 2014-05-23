@@ -68,6 +68,12 @@ class Aria2():
             else:
                 return self.aria2.pause(self.tok, ftype)
 
+    def unpause(self, ftype):
+        if ftype == 'all':
+            return self.aria2.unpauseAll(self.tok)
+        else:
+            return self.aria2.unpause(self.tok, ftype)
+
     def remove(self, gid, force=False):
         if force:
             return self.aria2.forceRemove(self.tok, gid)
