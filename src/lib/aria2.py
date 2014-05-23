@@ -84,8 +84,17 @@ class Aria2():
     def list(self, ftype, keys=None, offset=0, num=5):
         '''return status of given fid
 
-        fid may be one of 'all', 'active', 'waiting', 'paused', 'stopped',
-        'error', 'removed', or 'completed'.'''
+        fid may be gid, or one of 'all', 'active' 'queueing', 'waiting',
+        'paused', 'stopped', 'error', 'removed', and 'completed'.
+        
+        Key 'all' will return all status of file get by tellActive(),
+        tellWaiting(), tellStopped().
+        'queueing' accept all files staus get by tellWaiting(), note that
+        Key 'waiting' only get files that status is 'waititng'.
+        Key 'stopped' accept all files status get by tellStopped().
+        Others key will only return file that status equals to key.
+        If fid is gid, use tellStatus instead.
+        '''
         alltypes = ('active', 'queueing', 'stopped')
         queueingtypes = ('waiting', 'paused')
         stoppedtypes = ('error', 'removed', 'completed')
