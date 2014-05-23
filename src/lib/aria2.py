@@ -92,11 +92,15 @@ class Aria2():
             ftypes = [ftype]
 
         queryBT = True
+        queryStat = True
         args = [self.tok]
         if keys is not None:
             if 'bittorrent' not in keys:
                 queryBT = False
                 keys.append('bittorrent')
+            if 'status' not in keys:
+                queryStat = False
+                keys.append('status')
             args.append(keys)
         numargs = args[:1] + [offset, num] + args[1:]
 
@@ -119,6 +123,10 @@ class Aria2():
                     del d['bittorrent']
                 except KeyError:
                     continue
+        if not queryStat:
+            for d in reslist:
+                del d['status']
+
 
         return reslist
 
