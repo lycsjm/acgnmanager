@@ -11,7 +11,7 @@ from lib.config import Config
 from lib.aria2 import Aria2
 
 
-def makeParser():
+def getArgs():
     import argparse
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -32,13 +32,12 @@ def makeParser():
                         bittorrent file.''')
     parser.add_argument('--secret', help='''given rpc secret token''')
     parser.add_argument('--pat-root', help='''specified root of pattern''')
-    parser.add_argument('-c', '--config', nargs='+', metavar=('FILE', 'SECTION'),
-                        help='''Read config from file. FILE is file name of
-                        that config and SECTION is section.''')
-    return parser
+    parser.add_argument('-c', '--config', nargs='+',
+                        metavar=('FILE', 'SECTION'), help='''Read config from
+                        file. FILE is file name of that config and SECTION is
+                        section.''')
+    args = parser.parse_args()
 
-
-def getArgs(args):
     if args.config is not None:
         if len(args.config) == 1:
             args.config.append('default')
@@ -50,7 +49,7 @@ def getArgs(args):
             yield args
     else:
         yield args
-    
+
 
 def getFileList(path):
     '''get list of bittorrent files.'''
@@ -70,9 +69,7 @@ def getFileList(path):
     return flist
 
 
-def getPatterns():
-    scriptpath = os.path.dirname(sys.argv[0])
-    dbpath = os.path.join(scriptpath, '../data/acgndb.sqlite')
+def getPatterns(dbpath):
     db = sqlite3.connect(dbpath, factory=DBMS)
     query = '''
         select anime_id as id, pattern, dir_name
@@ -82,63 +79,66 @@ def getPatterns():
     return db.execute(query, tuple()).fetchall()
 
 
-def autoChangeDir(aria2, gid, opts, pats, dstroot):
-    ''' change directory based on patterns'''
-    # read info of added file
-    # TODO: change this file
-    info = aria2.list(gid, ['bittorrent', 'dir'])
-    try:
-        name = info['bittorrent']['info']['name']
-    except KeyError:
-        # already added
-        return
-    for pat in pats:
-        if pat['pattern'] in name:
-            opts['dir'] = os.path.join(dstroot, pat['dir_name'])
-            #TODO: implement those function
-            aria2.changeOption(gid, opts)
-            break
+def mkOptions(args):
+    opts = {}
+    if args.dst is not None:
+        if not os.path.isdir(args.dst):
+            raise ValueError('dst must be a directory.')
+        opts['dir'] = os.path.abspath(args.dst)
+    return opts
+
+
+def getPatRoot(args):
+    if args.pat_root is None:
+        if args.dst is not None:
+            return os.path.abspath(args.dst)
+        else:
+            return
+    elif not os.path.isdir(args.pat_root):
+        raise ValueError('pat-root must be a direcory')
     else:
-        # not find any pattern
-        # ask for add pattern
-        pass
-    return name
+        return os.path.abspath(args.pat_root)
 
 
 def main():
-    parser = makeParser()
+    today = datetime.date.today()
+    scriptpath = os.path.dirname(sys.argv[0])
+    dbpath = os.path.join(scriptpath, '../data/filelog.sqlite')
+    logger = sqlite3.connect(dbpath)
+    logquery = '''
+        insert or ignore into torrent_log(adddate, fname, tname)
+        values (?, ?, ?);
+    '''
+    pats = getPatterns(os.path.join(scriptpath, '../data/acgndb.sqlite'))
 
-    for args in getArgs(parser.parse_args()):
+    for args in getArgs():
         aria2 = Aria2(args.aria2uri, args.secret)
 
-        flist = getFileList(args.path)
-        opts = {}
-        if args.dst is not None:
-            if not os.path.isdir(args.dst):
-                raise ValueError('dst must be a directory.')
-            opts['dir'] = os.path.abspath(args.dst)
-            if args.pat_root is None:
-                dstroot = opts['dir']
-            elif not os.path.isdir(args.pat_root):
-                raise ValueError('pat-root must be a direcory')
-            else:
-                dstroot = os.path.abspath(args.pat_root)
+        opts = mkOptions(args)
+        dstroot = getPatRoot(args)
 
-        scriptpath = os.path.dirname(sys.argv[0])
-        dbpath = os.path.join(scriptpath, '../data/filelog.sqlite')
-        logger = sqlite3.connect(dbpath)
-        logquery = '''
-            insert or ignore into torrent_log(addDate, fname, tname)
-            values (?, ?, ?);
-        '''
-        today = datetime.date.today()
+        flist = getFileList(args.path)
         # add bittorrent to aria2
         for f in flist:
             gid = aria2.add(f, opts)
 
             # process file(change dir, drop download ... etc)
-            pats = getPatterns()
-            name = autoChangeDir(aria2, gid, opts, pats, dstroot)
+            info = aria2.list(gid, ['bittorrent', 'dir'])
+            try:
+                name = info['bittorrent']['info']['name']
+            except KeyError:
+                # already added
+                pass
+            for pat in pats:
+                if pat['pattern'] in name:
+                    opts['dir'] = os.path.join(dstroot, pat['dir_name'])
+                    aria2.changeOption(gid, opts)
+                    break
+            else:
+                # not find any pattern
+                # ask for add pattern
+                pass
+
             # log and remove source bt
             args = (today, name, f)
             logger.execute(logquery, args)
