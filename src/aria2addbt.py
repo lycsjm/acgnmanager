@@ -47,6 +47,7 @@ def getArgs():
                 if key in conf:
                     exec('args.{key} = conf["{key}"]'.format(key=key))
             yield args
+            parser.parse_args(namespace=args)
     else:
         yield args
 
