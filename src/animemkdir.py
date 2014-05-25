@@ -4,7 +4,7 @@ import sqlite3
 import os.path
 import os
 
-from dbms import DBMS
+from lib.dbms import DBMS
 
 
 def getSeason(date=datetime.date.today()):

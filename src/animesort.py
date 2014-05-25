@@ -3,7 +3,7 @@ import sqlite3
 import os.path
 import shutil
 
-from dbms import DBMS
+from lib.dbms import DBMS
 
 
 

@@ -6,8 +6,8 @@ import sqlite3
 import textwrap
 import sys
 
-from dbms import DBMS
-from config import Config
+from lib.dbms import DBMS
+from lib.config import Config
 
 
 def makeParser():
