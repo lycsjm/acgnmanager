@@ -18,8 +18,11 @@ class Aria2():
     * forceShutdown(tok)
     * system.multicall(method)
     '''
-    def __init__(self, uri, secret=None):
-        self.conf = self._loadconfig()
+    def __init__(self, uri, secret=None, confName=None):
+        if confName is not None:
+            self.conf = self.parse(confName)
+        else:
+            self.conf = {}
         self.aria2 = xmlrpc.client.ServerProxy(uri).aria2
         self.tok = 'token:'
         if secret is not None:
@@ -45,12 +48,6 @@ class Aria2():
         
         return conf
         
-
-    def _loadconfig(self):
-        '''load user's config.'''
-        fname = os.path.expanduser('~/.aria2/aria2.conf')
-        conf = {}
-
         try:
             with open(fname) as f:
                 lines = f.readlines()
