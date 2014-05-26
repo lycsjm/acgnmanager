@@ -27,6 +27,25 @@ class Aria2():
         elif 'rpc-secret' in self.conf:
             self.tok += self.conf['rpc-secret']
 
+    def parse(self, fname=os.path.expanduser('~/.aria2/aria2.conf')):
+        '''Parse config file.
+        
+        fname is config file path, if not given, use ~/.aria2/aria2.conf'''
+        conf = {}
+
+        with open(fname) as f:
+            lines = f.readlines()
+
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            name, value = line.split('=')
+            conf[name] = value
+        
+        return conf
+        
+
     def _loadconfig(self):
         '''load user's config.'''
         fname = os.path.expanduser('~/.aria2/aria2.conf')
