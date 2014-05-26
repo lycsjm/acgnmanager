@@ -11,8 +11,6 @@ class Aria2():
     * getServers(tok, gid)
     * changePosition(tok, gid, pos, how)
     * changeUri(tok, gid, findex, delUris, addUris, pos)
-    * getGlobalOption(tok)
-    * changeGlobaloption(tok, opt)
     * getGlobalStat(tok)
     * getVersion(tok)
     * getSessionInfo(tok)
@@ -189,21 +187,27 @@ class Aria2():
 
         return reslist
 
-    def getOption(self, gid):
+    def getOption(self, ftype):
         '''Get option of specified download'''
-        return self.aria2.getOption(self.tok, gid)
+        if ftype == 'all':
+            return self.aria2.getGlobalOption(self.tok)
+        else:
+            return self.aria2.getOption(self.tok, ftype)
     
-    def changeOption(self, gid, opts):
+    def changeOption(self, ftype, opts):
         noPauseOpts = ('bt-max-peers', 'force-save', 'max-download-limit',
                        'max-upload-limit', 'bt-remove-unselected-file',
                        'bt-request-peer-speed-limit',)
 
-        if all(key in noPauseOpts for key in opts):
-            self.aria2.changeOption(self.tok, gid, opts)
+        if ftype == 'all':
+            return self.changeGlobalOption(self.tok, opts)
         else:
-            self.aria2.pause(self.tok, gid)
-            self.aria2.changeOption(self.tok, gid, opts)
-            self.aria2.unpause(self.tok, gid)
+            if all(key in noPauseOpts for key in opts):
+                self.aria2.changeOption(self.tok, ftype, opts)
+            else:
+                self.aria2.pause(self.tok, ftype)
+                self.aria2.changeOption(self.tok, ftype, opts)
+                self.aria2.unpause(self.tok, ftype)
 
     def save(self):
         '''save setting'''
