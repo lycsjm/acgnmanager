@@ -141,8 +141,8 @@ def main():
                 pass
 
             # log and remove source bt
-            args = (today, name, f)
-            logger.execute(logquery, args)
+            qargs = (today, name, f)
+            logger.execute(logquery, qargs)
             os.remove(f)
         aria2.saveSession(tok)
         # ask if pattern not found
