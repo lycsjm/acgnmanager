@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import xmlrpc.client
 import os
 import os.path
 import sqlite3
@@ -9,6 +8,7 @@ import datetime
 
 from lib.dbms import DBMS
 from lib.config import Config
+from lib.aria2 import Aria2
 
 
 def makeParser():
@@ -81,11 +81,11 @@ def getPatterns():
     return db.execute(query, tuple()).fetchall()
 
 
-def autoChangeDir(aria2, tok, gid, opts, pats, dstroot):
+def autoChangeDir(aria2, gid, opts, pats, dstroot):
     ''' change directory based on patterns'''
     # read info of added file
     # TODO: change this file
-    info = aria2.tellStatus(tok, gid, ['bittorrent', 'dir'])
+    info = aria2.list(gid, ['bittorrent', 'dir'])
     try:
         name = info['bittorrent']['info']['name']
     except KeyError:
@@ -94,9 +94,8 @@ def autoChangeDir(aria2, tok, gid, opts, pats, dstroot):
     for pat in pats:
         if pat['pattern'] in name:
             opts['dir'] = os.path.join(dstroot, pat['dir_name'])
-            aria2.pause(tok, gid)
-            aria2.changeOption(tok, gid, opts)
-            aria2.unpause(tok, gid)
+            #TODO: implement those function
+            aria2.changeOption(gid, opts)
             break
     else:
         # not find any pattern
@@ -109,10 +108,8 @@ def main():
     parser = makeParser()
 
     for args in getArgs(parser.parse_args()):
-        aria2 = xmlrpc.client.ServerProxy(args.aria2uri).aria2
-        tok = 'token:'
-        if args.secret is not None:
-            tok += args.secret
+        aria2 = Aria2(args.aria2uri, args.secret)
+
         flist = getFileList(args.path)
         opts = {}
         if args.dst is not None:
@@ -136,12 +133,11 @@ def main():
         today = datetime.date.today()
         # add bittorrent to aria2
         for f in flist:
-            bt = xmlrpc.client.Binary(open(f, 'rb').read())
-            gid = aria2.addTorrent(tok, bt, [], opts)
+            gid = aria2.add(f, opts)
 
             # process file(change dir, drop download ... etc)
             pats = getPatterns()
-            name = autoChangeDir(aria2, tok, gid, opts, pats, dstroot)
+            name = autoChangeDir(aria2, gid, opts, pats, dstroot)
             # log and remove source bt
             args = (today, name, f)
             logger.execute(logquery, args)
