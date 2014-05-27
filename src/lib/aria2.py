@@ -1,4 +1,5 @@
 import xmlrpc.client
+from urllib.parse import urlparse
 import os.path
 
 
@@ -18,11 +19,27 @@ class Aria2():
     * forceShutdown(tok)
     * system.multicall(method)
     '''
-    def __init__(self, uri, secret=None, confName=None):
+    def __init__(self, uri=None, secret=None, port=None, confName=None):
+        '''
+        
+        all config in confName will be written by parameter.'''
         if confName is not None:
             self.conf = self.parse(confName)
         else:
             self.conf = {}
+
+        if port is None:
+            port = 6800
+            if 'rpc-listen-port' in self.conf:
+                port = self.conf['rpc-listen-port']
+
+        if uri is None:
+            uri = 'http://localhost:{}/rpc'.format(port)
+        else:
+            parsedUri = urlparse(uri)
+            if parsedUri.port is None:
+                parsedUri.port = port
+            uri = 'http://{uri.hostname}:{uri.port}/rpc'.format(uri=parsedUri)
         self.aria2 = xmlrpc.client.ServerProxy(uri).aria2
         self.tok = 'token:'
         if secret is not None:
