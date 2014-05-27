@@ -1,4 +1,5 @@
 import xmlrpc.client
+from urllib.parse import urlparse
 import os.path
 
 
@@ -11,8 +12,6 @@ class Aria2():
     * getServers(tok, gid)
     * changePosition(tok, gid, pos, how)
     * changeUri(tok, gid, findex, delUris, addUris, pos)
-    * getGlobalOption(tok)
-    * changeGlobaloption(tok, opt)
     * getGlobalStat(tok)
     * getVersion(tok)
     * getSessionInfo(tok)
@@ -20,8 +19,27 @@ class Aria2():
     * forceShutdown(tok)
     * system.multicall(method)
     '''
-    def __init__(self, uri, secret=None):
-        self.conf = self._loadconfig()
+    def __init__(self, uri=None, secret=None, port=None, confName=None):
+        '''
+        
+        all config in confName will be written by parameter.'''
+        if confName is not None:
+            self.conf = self.parse(confName)
+        else:
+            self.conf = {}
+
+        if port is None:
+            port = 6800
+            if 'rpc-listen-port' in self.conf:
+                port = self.conf['rpc-listen-port']
+
+        if uri is None:
+            uri = 'http://localhost:{}/rpc'.format(port)
+        else:
+            parsedUri = urlparse(uri)
+            if parsedUri.port is None:
+                parsedUri.port = port
+            uri = 'http://{uri.hostname}:{uri.port}/rpc'.format(uri=parsedUri)
         self.aria2 = xmlrpc.client.ServerProxy(uri).aria2
         self.tok = 'token:'
         if secret is not None:
@@ -29,11 +47,24 @@ class Aria2():
         elif 'rpc-secret' in self.conf:
             self.tok += self.conf['rpc-secret']
 
-    def _loadconfig(self):
-        '''load user's config.'''
-        fname = os.path.expanduser('~/.aria2/aria2.conf')
+    def parse(self, fname=os.path.expanduser('~/.aria2/aria2.conf')):
+        '''Parse config file.
+        
+        fname is config file path, if not given, use ~/.aria2/aria2.conf'''
         conf = {}
 
+        with open(fname) as f:
+            lines = f.readlines()
+
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            name, value = line.split('=')
+            conf[name] = value
+        
+        return conf
+        
         try:
             with open(fname) as f:
                 lines = f.readlines()
@@ -189,21 +220,27 @@ class Aria2():
 
         return reslist
 
-    def getOption(self, gid):
+    def getOption(self, ftype):
         '''Get option of specified download'''
-        return self.aria2.getOption(self.tok, gid)
+        if ftype == 'all':
+            return self.aria2.getGlobalOption(self.tok)
+        else:
+            return self.aria2.getOption(self.tok, ftype)
     
-    def changeOption(self, gid, opts):
+    def changeOption(self, ftype, opts):
         noPauseOpts = ('bt-max-peers', 'force-save', 'max-download-limit',
                        'max-upload-limit', 'bt-remove-unselected-file',
                        'bt-request-peer-speed-limit',)
 
-        if all(key in noPauseOpts for key in opts):
-            self.aria2.changeOption(self.tok, gid, opts)
+        if ftype == 'all':
+            return self.changeGlobalOption(self.tok, opts)
         else:
-            self.aria2.pause(self.tok, gid)
-            self.aria2.changeOption(self.tok, gid, opts)
-            self.aria2.unpause(self.tok, gid)
+            if all(key in noPauseOpts for key in opts):
+                self.aria2.changeOption(self.tok, ftype, opts)
+            else:
+                self.aria2.pause(self.tok, ftype)
+                self.aria2.changeOption(self.tok, ftype, opts)
+                self.aria2.unpause(self.tok, ftype)
 
     def save(self):
         '''save setting'''
